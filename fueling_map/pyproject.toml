@@ -1,0 +1,35 @@
+[project]
+name = "fueling-map"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.1.1",
+]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=6.1.1",
+    "mypy>=2.3.1",
+    "pytest>=9.1.1",
+    "pytest-django>=4.14.0",
+    "ruff>=0.16.9",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.mypy]
+plugins = ["mypy_django_plugin.main"]
+strict = true
+exclude = ["\\.venv", "specs"]
+
+[tool.django-stubs]
+django_settings_module = "config.settings"

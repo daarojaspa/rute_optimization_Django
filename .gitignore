@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Generated build outputs
+stations_locations.sqlite3
+cities.sqlite3
+unmatched.csv

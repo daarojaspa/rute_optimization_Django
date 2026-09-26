@@ -1,0 +1,213 @@
+
+The plan is written and the constitution check passes both before and after the design. Because you chose the Django ORM, byte-identical output is verified at table-content level, not raw file level, as explained under "Open items". No .specify/extensions.yml exists, so no hooks ran.
+
+Branch: 001-build-data-pipeline
+Plan: specs/001-build-data-pipeline/plan.md
+
+Artifacts (in specs/001-build-data-pipeline/):
+- research.md: the design decisions and their alternatives.
+- data-model.md: the Station and City tables and the pipeline's transient types.
+- contracts/build_data-cli.md: flags, inputs, outputs, and exit codes.
+- quickstart.md: runnable validation steps (build twice and compare, force the gate, missing file, data checks).
+
+Your choices, as recorded:
+- Module design A: one deep pure stations/pipeline.py with a single build(...) entry point, and a thin command around it.
+- Storage B: the Django ORM with two databases. default is stations_locations.sqlite3, and cities is cities.sqlite3, routed by a small router. The gate runs before any write, and the reload happens inside a transaction.
+
+Design details I added:
+- Deterministic shift: it is derived from a SHA-256 of the OPIS ID, with a radius of at most 4.9 miles (a margin under your 5-mile cap). The lowest OPIS ID in each city stays at the city coordinates.
+- Cleaning order: the price filter runs before the dedupe, so a bad low price can't win a group.
+- Bare "MT": it is not expanded, because your rule only lists "MT.".
+- Spread log: the run logs same-name city groups spread over more than 50 miles.
+- Dependencies: none beyond Django and the tools in the constitution. I used no pandas, and the plan records why.
+- PRs: the work is split into three PRs, each under 300 lines.
+
+Open items:
+- File identity vs table contents: the ORM's delete-and-reload leaves free pages in the SQLite file, so two runs may not give byte-identical files. The plan and quickstart compare an export ordered by opis_id instead. If you need file-level identity, tell me and we can revisit.
+- Python and Django versions: the system Python is 3.10, and the newest Django probably needs 3.12 or later. The plan says to pin the versions with uv at setup and confirm the minimum, since I haven't verified it.
+- Table names: Django names them from the app label unless overridden. The plan notes this and leaves the final names for setup.
+- Django project: none exists yet, so the first PR creates it.
+
+Next step is /speckit-tasks.
+
+
+32 tasks follow the checklist format (checkbox, T001–T032 ID, story label on story tasks, file path). No .specify/extensions.yml exists, so no hooks ran.
+
+Tasks per phase
+
+┌─────────────────────────────────────┬───────────────┬──────────────────────────────────────────────────────────┐
+│                Phase                │     Tasks     │                          Notes                           │
+├─────────────────────────────────────┼───────────────┼──────────────────────────────────────────────────────────┤
+│ Setup                               │ 3 (T001–T003) │ uv project, Django skeleton, tooling                     │
+├─────────────────────────────────────┼───────────────┼──────────────────────────────────────────────────────────┤
+│ Foundational                        │ 6 (T004–T009) │ two database aliases, models, router, migrations,        │
+│                                     │                                             │
+├─────────────────────────────────────┼───────────────┼──────────────────────────────────────────────────────────┤
+│ US1: build the station table (P1,   │ 11  n the pipeline and the command          │
+│ MVP)                                │ (T010–T020)   │                                                          │
+├─────────────────────────────────────┼─────────────────────────────────────────────┤
+│ US2: match-rate gate (P1)           │ 4 (T021–T024) │                                                          │
+├─────────────────────────────────────┼─────────────────────────────────────────────┤
+│ US3: repeatable rebuilds (P2)       │ 2 (T025–T026) │                                                          │
+├─────────────────────────────────────┼─────────────────────────────────────────────┤
+│ US4: flags and missing files (P3)   │ 2 (T027–T028) │                                                          │
+├─────────────────────────────────────┼─────────────────────────────────────────────┤
+│ Polish                              │ 4 (T029–T032) │ README note, no-network test, lint and mypy, quickstart  │
+│                                     │                                             │
+└─────────────────────────────────────┴───────────────┴──────────────────────────────────────────────────────────┘
+
+Independent tests per story (from the quickstart):
+- US1: run on the supplied CSVs and inspect ere are no duplicate IDs, bad prices, or badstates.
+- US2: run with --fail-under 1.0. It should d.csv, and leave the databases unchanged.
+- US3: run twice and compare a table export ordered by opis_id (contents, per the plan) and the match rates.
+- US4: custom paths and threshold take effecleanly.
+
+Suggested MVP: Phases 1–3, delivered as threch (skeleton, pipeline, command). Then addUS2, US3 and US4 as small PRs.
+
+Parallel opportunities: the tasks marked [P] (for example the test-writing tasks T010–T015 and T005/T006). Most
+implementation tasks are sequential because are single files.
+
+Tests: I included them without being asked, ires behavior-named tests as the spec. Eachstory's tests come first and should fail before you implement it.
+
+One thing to check. US2's gate (T023) depends on build from US1 (T019), so US2 can't be delivered before the pipeline
+exists.
+
+Next step is /speckit-analyze for a consisteent. I haven't committed anything.
+
+Specification Analysis Report
+
+I read spec.md, plan.md, tasks.md and the constitution, and changed no files. I found no CRITICAL issues. I also ran a read-only match-rate check on the real CSVs, described under Findings.
+
+ID: I1
+Category: Inconsistency
+Severity: HIGH
+Location: spec FR-014, SC-002 vs plan "Constitution Check" and research Decision 2
+Summary: The spec promises a "byte-identical (after choosing the ORM) only guarantees
+identical table contents from an export ordered by opis_id.
+Recommendation: Reword FR-014 and SC-002 to n exported in opis_id order". Keep the plan's
+note.
+────────────────────────────────────────
+ID: I2
+Category: Ambiguity
+Severity: MEDIUM
+Location: FR-011 vs data-model / research Decision 4
+Summary: FR-011 divides by "total stations". that survived cleaning and dedupe.
+Recommendation: Define the denominator in FR-011: distinct stations after cleaning and dedupe.
+────────────────────────────────────────
+ID: I3
+Category: Underspecification
+Severity: MEDIUM
+Location: FR-013 vs plan Technical Context a
+Summary: The spec names the database stations_locations. The plan uses stations_locations.sqlite3 and cities.sqlite3.
+Table names are "unless overridden", so they
+Recommendation: Decide the two table names and file names now, and put them in FR-013 and the CLI contract.
+────────────────────────────────────────
+ID: I4
+Category: Inconsistency
+Severity: MEDIUM
+Location: FR-016 vs plan / T019
+Summary: FR-016 bans "in-memory lookup structures", but the join needs dictionaries, and the shift needs distance
+math.
+Recommendation: Reword FR-016 to ban only spatial indexes and the named CityIndex and StationIndex classes, plus route
+
+distance math.
+────────────────────────────────────────
+ID: I5
+Category: Coverage gap
+Severity: MEDIUM
+Location: Edge cases, T027/T028
+Summary: Missing input files and "zero stations survive" are edge cases and tasks, but no functional requirement
+covers
+them.
+Recommendation: Add an FR: fail with a non-z and write nothing.
+────────────────────────────────────────
+ID: I6
+Category: Coverage gap
+Severity: MEDIUM
+Location: SC-005
+Summary: Nothing checks that the summary acc
+Recommendation: Add a test that rows read equals rows kept plus rows dropped by reason.
+────────────────────────────────────────
+ID: I7
+Category: Coverage gap
+Severity: LOW
+Location: FR-005, FR-016
+Summary: These are prohibitions and have no test.
+Recommendation: Add a test that a misspelled). FR-016 is enforced in review.
+────────────────────────────────────────
+ID: I8
+Category: Constitution
+Severity: LOW
+Location: Constitution Development Workflow ("green before review")
+Summary: No task creates the CI workflow thenstitution's own TODO(CI_CONFIG) notes this.
+Recommendation: Add a CI task, or state that it is a separate feature.
+────────────────────────────────────────
+ID: I9
+Category: Unmapped task
+Severity: LOW
+Location: T018
+Summary: The 50-mile spread log appears in the plan and T018 but in no FR.
+Recommendation: Add a one-line FR, or drop t
+────────────────────────────────────────
+ID: I10
+Category: Terminology
+Severity: LOW
+Location: spec FR-017 vs FR-010
+Summary: "City-level" and "city-center" are
+Recommendation: Use "city-level" everywhere.
+────────────────────────────────────────
+ID: I11
+Category: Inconsistency
+Severity: LOW
+Location: spec SC numbering
+Summary: SC-004a appears before SC-004.                                                                               Recommendation: Renumber them.
+────────────────────────────────────────                                                                              ID: I12
+Category: Ambiguity                                                                                                   Severity: LOW
+Location: FR-004                                                                                                      Summary: "MT." expands but bare "MT" does noy to miss.
+Recommendation: Note it in the spec, and add a test asserting it.                                                     
+Data risk I checked. With a default gate of 0.95, I worried the build would fail on the real data. I ran the cleaning rules from the spec on the real CSVs, using  stations after cleaning, 6,614 matched, or99.8%. The 12 unmatched are Port Wentworth GA, Elizabethport NJ, Brookpark OH, Evergreen AL, Henrico VA and University Park IL. So SC-001 is achievable.
+
+Coverage summary (18 functional requirements
+
+┌────────────────┬─────────────────────────┐
+│  Requirement   │        Task IDs         │
+├────────────────┼─────────────────────────┤
+│ FR-001         │ T027, T028              │
+├────────────────┼─────────────────────────┤
+│ FR-002         │ T030                    │
+├────────────────┼─────────────────────────┤
+│ FR-003, FR-004 │ T010, T016              │
+├────────────────┼─────────────────────────┤
+│ FR-006, FR-007 │ T011, T017              │
+├────────────────┼─────────────────────────┤
+│ FR-008         │ T012, T018              │
+├────────────────┼─────────────────────────┤
+│ FR-009         │ T013, T018              │
+├────────────────┼─────────────────────────┤
+│ FR-010         │ T013, T019              │
+├────────────────┼─────────────────────────┤
+│ FR-010a        │ T014, T019              │
+├────────────────┼─────────────────────────┤
+│ FR-011, FR-012 │ T021, T022, T023, T024  │
+├────────────────┼─────────────────────────┤
+│ FR-013, FR-015 │ T015, T020              │
+├────────────────┼─────────────────────────┤
+│ FR-014         │ T025, T026              │
+├────────────────┼─────────────────────────┤
+│ FR-017         │ T029                    │
+├────────────────┼─────────────────────────┤
+│ FR-005, FR-016 │ none (prohibitions, I7) │
+└────────────────┴─────────────────────────┘
+
+Constitution alignment: no violations. The pe I. The design-twice rule (III) issatisfied, and the PR size limit is planned for.
+
+Unmapped tasks: T018 (the spread log) and the setup and foundational tasks, which are expected.
+
+Metrics
+- Requirements: 18 FR and 6 buildable SC.
+- Tasks: 32.                                                                                                         - Coverage: 16 of 18 FR (89%) have at least rohibitions.
+- Ambiguities: 3. Duplications: 0. Critical: 0.                                                                      
+Next Actions                                                                                                         
+No blockers. I'd fix I1 to I5 first, because they change what tests assert, and then run /speckit-implement. To edit the spec, use /speckit-specify or edit it byter feature.
+
+Would you like concrete remediation edits fothing without your approval.
