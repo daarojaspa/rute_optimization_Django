@@ -70,6 +70,32 @@ def _resolve_endpoint(
     return city_key, normalized_state, coord
 
 
+_CACHE_TTL_SECONDS = 86400  # 24 h (FR-015)
+
+
+def _cache_key(start_city: str, start_state: str, finish_city: str, finish_state: str) -> str:
+    return f"route:{start_city}:{start_state}:{finish_city}:{finish_state}"
+
+
+def _fetch_cached_route(
+    cache: RouteCache | None,
+    key: str,
+    start_coord: tuple[float, float],
+    finish_coord: tuple[float, float],
+    http: httpx.Client,
+) -> Route:
+    """A cache hit costs zero OSRM calls; a miss fetches and stores (FR-015). No cache (None)
+    always fetches -- used by callers (and early-phase tests) that don't need caching yet."""
+    if cache is not None:
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+    route = fetch_route(start_coord, finish_coord, http)
+    if cache is not None:
+        cache.set(key, route, _CACHE_TTL_SECONDS)
+    return route
+
+
 def plan_route(
     start: str,
     finish: str,
@@ -89,7 +115,8 @@ def plan_route(
     if (start_city, start_state) == (finish_city, finish_state):
         raise SameEndpoints()
 
-    route = fetch_route(start_coord, finish_coord, http)
+    key = _cache_key(start_city, start_state, finish_city, finish_state)
+    route = _fetch_cached_route(cache, key, start_coord, finish_coord, http)
 
     return RouteResult(
         start_city=start_city,

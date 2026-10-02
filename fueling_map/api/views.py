@@ -6,6 +6,7 @@ CityNotFound and OsrmRejected add extra fields to the body.
 """
 
 import httpx
+from django.core.cache import cache
 from django.http import HttpRequest, JsonResponse
 
 from api.repo import load_cities
@@ -23,7 +24,7 @@ def route_view(request: HttpRequest) -> JsonResponse:
             request.GET.get("start", ""),
             request.GET.get("finish", ""),
             cities,
-            cache=None,
+            cache=cache,
             http=_http_client,
         )
     except RouteError as err:

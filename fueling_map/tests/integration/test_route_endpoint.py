@@ -10,6 +10,7 @@ from collections.abc import Iterator
 import httpx
 import pytest
 import respx
+from django.core.cache import cache as django_cache
 from django.test import Client
 
 from routing.city_index import reset_city_index
@@ -23,8 +24,10 @@ OSRM_URL = "https://router.project-osrm.org"
 @pytest.fixture(autouse=True)
 def _reset_index() -> Iterator[None]:
     reset_city_index()
+    django_cache.clear()
     yield
     reset_city_index()
+    django_cache.clear()
 
 
 @pytest.fixture(autouse=True)
@@ -147,3 +150,30 @@ def test_osrm_timeout_returns_504(client: Client) -> None:
 
     assert response.status_code == 504
     assert response.json()["error"] == "osrm_unavailable"
+
+
+# --- US3: cache ----------------------------------------------------------------------------
+
+
+@respx.mock
+def test_repeated_request_hits_cache_and_makes_no_osrm_call(client: Client) -> None:
+    _seed_cities()
+    route = _mock_osrm()
+    params = {"start": "Dallas, TX", "finish": "Denver, CO"}
+
+    first = client.get("/api/route/", params)
+    second = client.get("/api/route/", params)
+
+    assert first.status_code == second.status_code == 200
+    assert route.calls.call_count == 1
+
+
+@respx.mock
+def test_reverse_pair_makes_a_new_osrm_call(client: Client) -> None:
+    _seed_cities()
+    route = _mock_osrm()
+
+    client.get("/api/route/", {"start": "Dallas, TX", "finish": "Denver, CO"})
+    client.get("/api/route/", {"start": "Denver, CO", "finish": "Dallas, TX"})
+
+    assert route.calls.call_count == 2

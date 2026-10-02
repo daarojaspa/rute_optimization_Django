@@ -120,13 +120,13 @@ description: "Task list for the route lookup and orchestration endpoint"
 
 ### Tests for User Story 3 (write first)
 
-- [ ] T031 [P] [US3] `tests/unit/routing/test_pipeline.py`: `test_second_identical_request_makes_zero_osrm_calls`, `test_reverse_direction_is_a_separate_cache_entry`, `test_equivalent_spellings_share_one_cache_entry`, `test_expired_cache_entry_is_refetched`
-- [ ] T032 [P] [US3] `tests/integration/test_route_endpoint.py`: `test_repeated_request_hits_cache_and_makes_no_osrm_call`, `test_reverse_pair_makes_a_new_osrm_call`
+- [X] T031 [P] [US3] `tests/unit/routing/test_pipeline.py`: `test_second_identical_request_makes_zero_osrm_calls`, `test_reverse_direction_is_a_separate_cache_entry`, `test_equivalent_spellings_share_one_cache_entry`, `test_expired_cache_entry_is_refetched`
+- [X] T032 [P] [US3] `tests/integration/test_route_endpoint.py`: `test_repeated_request_hits_cache_and_makes_no_osrm_call`, `test_reverse_pair_makes_a_new_osrm_call`
 
 ### Implementation for User Story 3
 
-- [ ] T033 [US3] `routing/pipeline.py`: wrap `fetch_route` with the injected two-method cache protocol (`get`/`set`), key `route:{start_key}:{start_state}:{finish_key}:{finish_state}`, TTL 86400 s (depends on T029)
-- [ ] T034 [US3] `api/views.py`: inject Django's `cache` (configured LocMemCache) into `plan_route` at the view boundary (depends on T026, T033)
+- [X] T033 [US3] `routing/pipeline.py`: wrap `fetch_route` with the injected two-method cache protocol (`get`/`set`), key `route:{start_key}:{start_state}:{finish_key}:{finish_state}`, TTL 86400 s (depends on T029)
+- [X] T034 [US3] `api/views.py`: inject Django's `cache` (configured LocMemCache) into `plan_route` at the view boundary (depends on T026, T033)
 
 **Checkpoint**: repeated and reversed requests behave exactly per quickstart #3/#4.
 
