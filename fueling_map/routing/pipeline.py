@@ -2,9 +2,9 @@
 
 Interface: ``plan_route(start, finish, cities, cache, http, planner=None) -> RouteResult``.
 Takes the already-built CityIndex and an httpx.Client as plain arguments; no ORM, no Django
-settings (Principle I). FR-006..FR-018 land here incrementally, one user story per phase: this
-phase (US1b) resolves a known city pair to a real route; later phases (US2-US4) add validation,
-caching and the short-trip/planner seam on top of these same two functions.
+settings (Principle I). Resolves both endpoints (FR-006..FR-009), fetches or reuses a cached
+route (FR-015), and plans its stops: a short trip needs none, a longer one is handed to the
+injected fuel-stop algorithm, not yet wired in (FR-017, FR-018).
 """
 
 from collections.abc import Callable
@@ -14,7 +14,7 @@ from typing import Protocol
 import httpx
 
 from routing.city_index import CityIndex
-from routing.errors import CityNotFound, InvalidParameter, SameEndpoints
+from routing.errors import CityNotFound, InvalidParameter, PlannerNotAvailable, SameEndpoints
 from routing.normalize import normalize_city_key
 from routing.osrm import Route, fetch_route
 
@@ -96,20 +96,39 @@ def _fetch_cached_route(
     return route
 
 
+_SHORT_TRIP_MAX_MILES = 500.0  # full-tank range, 50 gal x 10 mpg (research.md D8)
+
+Planner = Callable[[Route, tuple[float, float], tuple[float, float]], tuple[list[object], float]]
+
+
+def _plan_stops(
+    route: Route,
+    start_coord: tuple[float, float],
+    finish_coord: tuple[float, float],
+    planner: Planner | None,
+) -> tuple[list[object], float]:
+    """Trips of 500 miles or less need no fill-up (FR-018): a full tank already covers them.
+
+    Longer trips hand off geometry, total miles and both coordinates to the fuel-stop
+    algorithm (FR-017); until that feature exists, an explicit PlannerNotAvailable is
+    correct, not a silently wrong empty plan (research.md D8).
+    """
+    if route.total_miles <= _SHORT_TRIP_MAX_MILES:
+        return [], 0.0
+    if planner is None:
+        raise PlannerNotAvailable()
+    return planner(route, start_coord, finish_coord)
+
+
 def plan_route(
     start: str,
     finish: str,
     cities: CityIndex,
     cache: RouteCache | None,
     http: httpx.Client,
-    planner: Callable[[RouteResult], object] | None = None,
+    planner: Planner | None = None,
 ) -> RouteResult:
-    """Resolve both endpoints, reject bad input, and fetch their route.
-
-    Short-trip/planner branching (FR-017, FR-018) is layered on top by US4; this phase always
-    returns an empty stop list and zero cost, which is correct for the trips tested here and
-    will be replaced, not patched around, once the threshold lands.
-    """
+    """Resolve both endpoints, reject bad input, fetch their route, and plan its stops."""
     start_city, start_state, start_coord = _resolve_endpoint(start, "start", cities)
     finish_city, finish_state, finish_coord = _resolve_endpoint(finish, "finish", cities)
     if (start_city, start_state) == (finish_city, finish_state):
@@ -117,6 +136,7 @@ def plan_route(
 
     key = _cache_key(start_city, start_state, finish_city, finish_state)
     route = _fetch_cached_route(cache, key, start_coord, finish_coord, http)
+    stops, total_cost = _plan_stops(route, start_coord, finish_coord, planner)
 
     return RouteResult(
         start_city=start_city,
@@ -126,6 +146,6 @@ def plan_route(
         start_coord=start_coord,
         finish_coord=finish_coord,
         route=route,
-        stops=[],
-        total_cost=0.0,
+        stops=stops,
+        total_cost=total_cost,
     )

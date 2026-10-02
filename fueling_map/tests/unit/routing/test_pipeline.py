@@ -10,7 +10,7 @@ import httpx
 import pytest
 from pytest_mock import MockerFixture
 
-from routing.errors import CityNotFound, InvalidParameter, SameEndpoints
+from routing.errors import CityNotFound, InvalidParameter, PlannerNotAvailable, SameEndpoints
 from routing.osrm import Route
 from routing.pipeline import RouteCache, _parse_endpoint, plan_route
 
@@ -23,8 +23,10 @@ def http() -> Iterator[httpx.Client]:
         yield client
 
 
-def _stub_route() -> Route:
-    return Route(geometry=[(32.78, -96.80), (39.74, -104.99)], total_miles=801.3)
+def _stub_route(total_miles: float = 300.0) -> Route:
+    # <=500 miles (_SHORT_TRIP_MAX_MILES) by default, so tests unrelated to US4's threshold
+    # don't need a planner wired in.
+    return Route(geometry=[(32.78, -96.80), (39.74, -104.99)], total_miles=total_miles)
 
 
 class _DictCache:
@@ -197,3 +199,40 @@ def test_expired_cache_entry_is_refetched(mocker: MockerFixture, http: httpx.Cli
     plan_route("Dallas, TX", "Denver, CO", CITIES, cache, http)
 
     assert fetch.call_count == 2
+
+
+# --- US4: short trips / planner seam ----------------------------------------------------------
+
+
+def test_route_of_exactly_500_miles_returns_no_stops_and_zero_cost(
+    mocker: MockerFixture, http: httpx.Client
+) -> None:
+    mocker.patch("routing.pipeline.fetch_route", return_value=_stub_route(total_miles=500.0))
+
+    result = plan_route("Dallas, TX", "Denver, CO", CITIES, None, http)
+
+    assert result.stops == []
+    assert result.total_cost == 0.0
+
+
+def test_route_over_500_miles_calls_the_injected_planner(
+    mocker: MockerFixture, http: httpx.Client
+) -> None:
+    route = _stub_route(total_miles=500.1)
+    mocker.patch("routing.pipeline.fetch_route", return_value=route)
+    planner = mocker.Mock(return_value=([{"mile": 100}], 42.5))
+
+    result = plan_route("Dallas, TX", "Denver, CO", CITIES, None, http, planner=planner)
+
+    planner.assert_called_once_with(route, (32.78, -96.80), (39.74, -104.99))
+    assert result.stops == [{"mile": 100}]
+    assert result.total_cost == 42.5
+
+
+def test_route_over_500_miles_without_planner_raises_PlannerNotAvailable(
+    mocker: MockerFixture, http: httpx.Client
+) -> None:
+    mocker.patch("routing.pipeline.fetch_route", return_value=_stub_route(total_miles=500.1))
+
+    with pytest.raises(PlannerNotAvailable):
+        plan_route("Dallas, TX", "Denver, CO", CITIES, None, http)

@@ -177,3 +177,32 @@ def test_reverse_pair_makes_a_new_osrm_call(client: Client) -> None:
     client.get("/api/route/", {"start": "Denver, CO", "finish": "Dallas, TX"})
 
     assert route.calls.call_count == 2
+
+
+# --- US4: short trips / planner seam ---------------------------------------------------------
+
+
+@respx.mock
+def test_500_mile_route_returns_empty_stops_and_zero_cost_with_no_planner_call(
+    client: Client,
+) -> None:
+    _seed_cities()
+    _mock_osrm(distance_m=500 * 1609.344)
+
+    response = client.get("/api/route/", {"start": "Dallas, TX", "finish": "Denver, CO"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["stops"] == []
+    assert body["total_cost"] == 0.0
+
+
+@respx.mock
+def test_over_500_mile_route_returns_501_planner_not_available(client: Client) -> None:
+    _seed_cities()
+    _mock_osrm(distance_m=500.1 * 1609.344)
+
+    response = client.get("/api/route/", {"start": "Dallas, TX", "finish": "Denver, CO"})
+
+    assert response.status_code == 501
+    assert response.json()["error"] == "planner_not_available"

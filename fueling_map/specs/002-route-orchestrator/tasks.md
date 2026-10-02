@@ -140,13 +140,13 @@ description: "Task list for the route lookup and orchestration endpoint"
 
 ### Tests for User Story 4 (write first)
 
-- [ ] T035 [P] [US4] `tests/unit/routing/test_pipeline.py`: `test_route_of_exactly_500_miles_returns_no_stops_and_zero_cost`, `test_route_over_500_miles_calls_the_injected_planner`, `test_route_over_500_miles_without_planner_raises_PlannerNotAvailable`
-- [ ] T036 [P] [US4] `tests/integration/test_route_endpoint.py`: `test_500_mile_route_returns_empty_stops_and_zero_cost_with_no_planner_call`, `test_over_500_mile_route_returns_501_planner_not_available`
+- [X] T035 [P] [US4] `tests/unit/routing/test_pipeline.py`: `test_route_of_exactly_500_miles_returns_no_stops_and_zero_cost`, `test_route_over_500_miles_calls_the_injected_planner`, `test_route_over_500_miles_without_planner_raises_PlannerNotAvailable`
+- [X] T036 [P] [US4] `tests/integration/test_route_endpoint.py`: `test_500_mile_route_returns_empty_stops_and_zero_cost_with_no_planner_call`, `test_over_500_mile_route_returns_501_planner_not_available`
 
 ### Implementation for User Story 4
 
-- [ ] T037 [US4] `routing/pipeline.py`: the 500-mile short-circuit and the injected-`planner` seam building `RouteResult` per data-model.md / research.md D8 (depends on T033)
-- [ ] T038 [US4] `api/views.py`: include `stops`/`total_cost` in the success body; let `PlannerNotAvailable` flow through the existing error handler (depends on T030, T037)
+- [X] T037 [US4] `routing/pipeline.py`: the 500-mile short-circuit and the injected-`planner` seam building `RouteResult` per data-model.md / research.md D8 (depends on T033)
+- [X] T038 [US4] `api/views.py`: include `stops`/`total_cost` in the success body; let `PlannerNotAvailable` flow through the existing error handler (depends on T030, T037) — already true of the generic `except RouteError` handler from Phase 5; confirmed by T036's tests, no view change needed
 
 **Checkpoint**: threshold and planner seam behave exactly per quickstart #10/#11.
 
