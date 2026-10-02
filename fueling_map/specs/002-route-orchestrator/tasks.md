@@ -36,13 +36,13 @@ description: "Task list for the route lookup and orchestration endpoint"
 
 **Purpose**: The lookup and error types every user story depends on.
 
-- [ ] T008 [P] `routing/errors.py`: `RouteError` base (carries `status: int` and a message) and subclasses `InvalidParameter` (400), `SameEndpoints` (400), `CityNotFound` (404, carries `city_key`/`state`), `OsrmRejected` (502, carries `osrm_code`), `OsrmUnavailable` (504), `CitiesDataMissing` (503, names `build_data`), `PlannerNotAvailable` (501), per data-model.md
-- [ ] T009 [P] `tests/unit/routing/test_city_index.py`: `test_lookup_returns_coordinates_for_known_key`, `test_missing_database_raises_CitiesDataMissing_naming_build_data`, `test_empty_table_raises_CitiesDataMissing`, `test_concurrent_first_requests_build_the_lookup_exactly_once` (quickstart #13), `test_reset_city_index_allows_rebuild_in_tests`
-- [ ] T010 `routing/city_index.py`: module-level `_index` + `threading.Lock`; `get_city_index(loader)` check-lock-check-build; `reset_city_index()` test helper (depends on T008, T009)
-- [ ] T011 [P] `api/__init__.py`, `api/apps.py` — the `api` Django app
-- [ ] T012 `api/repo.py`: `load_cities()` — the single ORM read, returns `(city_key, state, lat, lon)` rows from `City` (depends on T010)
-- [ ] T013 [P] `tests/integration/test_api_repo.py`: `test_load_cities_returns_rows_from_cities_database`, `test_load_cities_returns_empty_list_when_table_is_empty` (uses the real `City` model against a temp cities DB)
-- [ ] T014 Register the `api` app in `config/settings.py` `INSTALLED_APPS` (depends on T011)
+- [X] T008 [P] `routing/errors.py`: `RouteError` base (carries `status: int` and a message) and subclasses `InvalidParameter` (400), `SameEndpoints` (400), `CityNotFound` (404, carries `city_key`/`state`), `OsrmRejected` (502, carries `osrm_code`), `OsrmUnavailable` (504), `CitiesDataMissing` (503, names `build_data`), `PlannerNotAvailable` (501), per data-model.md
+- [X] T009 [P] `tests/unit/routing/test_city_index.py`: `test_lookup_returns_coordinates_for_known_key`, `test_missing_database_raises_CitiesDataMissing_naming_build_data`, `test_empty_table_raises_CitiesDataMissing`, `test_concurrent_first_requests_build_the_lookup_exactly_once` (quickstart #13), `test_reset_city_index_allows_rebuild_in_tests`
+- [X] T010 `routing/city_index.py`: module-level `_index` + `threading.Lock`; `get_city_index(loader)` check-lock-check-build; `reset_city_index()` test helper (depends on T008, T009)
+- [X] T011 [P] `api/__init__.py`, `api/apps.py` — the `api` Django app
+- [X] T012 `api/repo.py`: `load_cities()` — the single ORM read, returns `(city_key, state, lat, lon)` rows from `City` (depends on T010)
+- [X] T013 [P] `tests/integration/test_api_repo.py`: `test_load_cities_returns_rows_from_cities_database`, `test_load_cities_returns_empty_list_when_table_is_empty` (uses the real `City` model against a temp cities DB)
+- [X] T014 Register the `api` app in `config/settings.py` `INSTALLED_APPS` (depends on T011)
 
 **Checkpoint**: `CityIndex` builds from the DB once, thread-safe, fails loudly on missing or empty data.
 

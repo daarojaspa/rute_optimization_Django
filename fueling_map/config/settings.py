@@ -14,7 +14,7 @@ SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-insecure-key")
 DEBUG = os.environ.get("DJANGO_DEBUG", "1") == "1"
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
-INSTALLED_APPS = ["stations"]
+INSTALLED_APPS = ["stations", "api"]
 MIDDLEWARE: list[str] = []
 ROOT_URLCONF = "config.urls"
 WSGI_APPLICATION = "config.wsgi.application"
