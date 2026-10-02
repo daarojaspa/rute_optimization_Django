@@ -1,6 +1,6 @@
 # Fueling Map
 
-API that plans cost-effective fuel stops along a US route. This part of the project builds the
+ API that plans cost-effective fuel stops along a US route. This part of the project builds the
 station data the planner reads.
 
 ## Build the station data

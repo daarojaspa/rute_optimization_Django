@@ -1,19 +1,28 @@
 <!--
 Sync Impact Report
-Version change: (template, unversioned) → 1.0.0
-Modified principles: none (initial adoption; all principles are new)
-Added sections: Purpose & Scope, Core Principles I–VI, Stack & Tooling, Security, Development
-  Workflow, Governance
+Version change: 1.0.0 → 2.0.0
+Modified principles: Security & Development Workflow — the 300-changed-line cap is redefined
+  from a per-PR limit to a per-commit limit, resolving TODO(PR_SIZE_CONFLICT) below. A PR may
+  now bundle several commits for one feature; each commit still states one logical change and
+  stays under 300 lines. This project is solo-maintained, so the agent may author and make
+  these commits itself with meaningful, conventional messages; pushes and PR merges still
+  require human approval (Principle VI, unchanged).
+Added sections: none
 Removed sections: none
-Follow-up TODOs:
+Resolved TODOs:
+  - TODO(PR_SIZE_CONFLICT): resolved by this amendment (human decision, 2026-10-02, recorded in
+    specs/002-route-orchestrator/analysis report answers.md, item F1). The cap binds commits;
+    CLAUDE.md's "one logical change per PR" and this constitution's commit-level cap no longer
+    describe the same unit, so there is no remaining conflict.
+Open follow-up TODOs (unchanged):
   - TODO(TERMINAL_LEG): the source text for the terminal-leg rule was ambiguous ("buys enough
     fuel to fuel the tank, fuel in the tank is fuel charged"). Recorded conservatively in
     Principle II; the human must confirm exact billing at the destination.
-  - TODO(PR_SIZE_CONFLICT): PR limit is 300 changed lines; CLAUDE.md "one logical change per
-    PR" also applies. Both are kept; no conflict found.
   - TODO(CI_CONFIG): no GitHub Actions workflow exists yet; Principle V and Development
     Workflow bind once it is created.
-Sources: user-supplied constitution draft (2026-09-26), CLAUDE.md, ARCHITECTURE.md.
+Sources: user-supplied constitution draft (2026-09-26), CLAUDE.md, ARCHITECTURE.md; amendment
+  source: specs/002-route-orchestrator/analysis-report.md (finding F1) and the human's answers
+  in specs/002-route-orchestrator/analysis report answers.md (2026-10-02).
 -->
 # Fueling Map (Spotter) Constitution
 
@@ -126,9 +135,12 @@ human controls all GitHub credentials, and every push and PR merge requires huma
 
 - API keys, tokens, and any confidential data MUST live in `.env` files or files listed in
   `.gitignore` and are never committed. `settings.py` MUST read them from the environment.
-- One logical change per PR; no PR changes more than 300 lines; no drive-by refactors or
-  formatting noise. No commit mixes `src/` logic with mass reformatting.
-- Commits follow `type(scope): summary`, body explaining why, not what.
+- One logical change per commit; no commit changes more than 300 lines; no drive-by refactors
+  or formatting noise in a commit that also touches `src/` logic. A pull request MAY bundle
+  several such commits for one feature; each commit still states exactly one change and stays
+  under the cap (resolves the prior PR-vs-commit ambiguity; see Sync Impact Report, v2.0.0).
+- Commits follow `type(scope): summary`, body explaining why, not what. The agent may author
+  and make these commits itself on this solo project, with meaningful, conventional messages.
 - Every PR description states what changed, why, how it was tested, and the design
   alternative rejected.
 - Work proceeds through Spec Kit (specify → plan → tasks → implement); plans include a
@@ -143,4 +155,4 @@ verify compliance; violations are fixed or explicitly justified and approved by 
 Complexity beyond the simplest viable design MUST be justified in the plan. `CLAUDE.md` is the
 runtime guidance file and MUST NOT contradict this document.
 
-**Version**: 1.0.0 | **Ratified**: 2026-09-26 | **Last Amended**: 2026-09-26
+**Version**: 2.0.0 | **Ratified**: 2026-09-26 | **Last Amended**: 2026-10-02
