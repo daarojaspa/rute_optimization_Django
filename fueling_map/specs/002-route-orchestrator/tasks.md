@@ -20,13 +20,13 @@ description: "Task list for the route lookup and orchestration endpoint"
 
 ## Phase 1: Setup (PR 1: `refactor(stations)` — shared normalizer)
 
-- [ ] T001 [P] Add `httpx` to runtime dependencies and `respx`, `pytest-mock` to the dev group in `pyproject.toml`; `uv sync`
-- [ ] T002 Create the `routing/` package (`routing/__init__.py`), plain Python, no Django import anywhere under it
-- [ ] T003 [P] `tests/unit/routing/test_normalize.py`: `test_state_is_trimmed_and_uppercased`, `test_city_whitespace_collapsed_and_uppercased`, `test_st_ft_mt_tokens_expand_as_whole_tokens_including_bare_mt`, `test_normalizing_an_already_normalized_pair_is_idempotent`
-- [ ] T004 `routing/normalize.py`: `normalize_city_key(city, state) -> tuple[str, str]` per FR-001/data-model.md `CityKey` (depends on T003)
-- [ ] T005 `stations/pipeline.py`: replace the local `_TOKEN_EXPANSIONS`/`_city_key` with an import of `normalize_city_key` from `routing.normalize`; keep `_display_city` for the stored display form (depends on T004)
-- [ ] T006 Rebuild any test fixtures or golden keys in `tests/unit/test_pipeline.py` / `tests/integration/test_build_data_command.py` affected by the new bare-`MT` expansion; add `test_stations_pipeline_and_routing_share_the_identical_normalize_function` (asserts `stations.pipeline.normalize_city_key is routing.normalize.normalize_city_key`, closing FR-002's cross-module coverage gap); rerun `uv run python manage.py build_data` and confirm the match rate is unchanged (research.md D2)
-- [ ] T007 Run `ruff check .`, `ruff format --check .`, `mypy .`, `pytest tests/unit/test_pipeline.py tests/unit/routing/test_normalize.py` — commit 1 green before continuing
+- [X] T001 [P] Add `httpx` to runtime dependencies and `respx`, `pytest-mock` to the dev group in `pyproject.toml`; `uv sync`
+- [X] T002 Create the `routing/` package (`routing/__init__.py`), plain Python, no Django import anywhere under it
+- [X] T003 [P] `tests/unit/routing/test_normalize.py`: `test_state_is_trimmed_and_uppercased`, `test_city_whitespace_collapsed_and_uppercased`, `test_st_ft_mt_tokens_expand_as_whole_tokens_including_bare_mt`, `test_normalizing_an_already_normalized_pair_is_idempotent`
+- [X] T004 `routing/normalize.py`: `normalize_city_key(city, state) -> tuple[str, str]` per FR-001/data-model.md `CityKey` (depends on T003)
+- [X] T005 `stations/pipeline.py`: replace the local `_TOKEN_EXPANSIONS`/`_city_key` with an import of `normalize_city_key` from `routing.normalize`; keep `_display_city` for the stored display form (depends on T004)
+- [X] T006 Rebuild any test fixtures or golden keys in `tests/unit/test_pipeline.py` / `tests/integration/test_build_data_command.py` affected by the new bare-`MT` expansion; add `test_stations_pipeline_and_routing_share_the_identical_normalize_function` (asserts `stations.pipeline.normalize_city_key is routing.normalize.normalize_city_key`, closing FR-002's cross-module coverage gap); rerun `uv run python manage.py build_data` and confirm the match rate is unchanged (research.md D2)
+- [X] T007 Run `ruff check .`, `ruff format --check .`, `mypy .`, `pytest tests/unit/test_pipeline.py tests/unit/routing/test_normalize.py` — commit 1 green before continuing
 
 **Checkpoint**: one shared normalizer; the data pipeline still builds with the same match rate.
 

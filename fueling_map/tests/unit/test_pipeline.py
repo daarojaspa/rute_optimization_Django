@@ -4,6 +4,8 @@ import math
 
 import pytest
 
+import routing.normalize
+import stations.pipeline
 from stations.pipeline import DataBuildError, MatchRateTooLow, build
 
 
@@ -83,13 +85,21 @@ def test_st_ft_mt_tokens_expand_in_match_key_on_both_sides(
     assert result.stats.matched == 1
 
 
-def test_bare_mt_without_period_is_not_expanded() -> None:
+def test_stations_pipeline_and_routing_share_the_identical_normalize_function() -> None:
+    # FR-002: the data-build pipeline and the request path must use ONE normalizer, never two
+    # that could drift apart. `is` (not `==`) proves it is the same function object, not a copy.
+    assert stations.pipeline.normalize_city_key is routing.normalize.normalize_city_key
+
+
+def test_bare_mt_without_period_is_expanded_by_the_shared_normalizer() -> None:
+    # routing.normalize.normalize_city_key (FR-001/FR-002, research.md D2) expands bare "MT",
+    # unlike this pipeline's original local rule. Matches, so nothing is left unmatched.
     result = build(
         [fuel(1, city="Mt Vernon", state="MO"), fuel(2)],
         [city("Mount Vernon", "MO"), city()],
         fail_under=0.0,
     )
-    assert [u.city for u in result.unmatched] == ["Mt Vernon"]
+    assert result.unmatched == []
 
 
 def test_display_city_keeps_original_form_after_key_expansion() -> None:

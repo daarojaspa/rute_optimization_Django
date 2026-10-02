@@ -15,6 +15,8 @@ import math
 from collections import defaultdict
 from dataclasses import dataclass, field
 
+from routing.normalize import normalize_city_key as normalize_city_key  # re-exported for FR-002
+
 logger = logging.getLogger(__name__)
 
 # 50 states plus DC. Canadian provinces and US territories present in the fuel file are dropped.
@@ -23,8 +25,6 @@ US_STATES = frozenset(
     "NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY".split()
 )
 MAX_PRICE = 10.00  # USD per gallon; anything above is treated as bad data
-# Closed list of token expansions for the matching key (spec FR-004). Bare "MT" is NOT expanded.
-_TOKEN_EXPANSIONS = {"ST.": "SAINT", "ST": "SAINT", "FT.": "FORT", "FT": "FORT", "MT.": "MOUNT"}
 # Spread same-city stations by at most 5 miles; 4.9 leaves margin for the flat-earth conversion.
 _MAX_SHIFT_MILES = 4.9
 _MILES_PER_DEGREE_LAT = 69.0
@@ -167,10 +167,6 @@ def _display_city(text: str) -> str:
     return _collapse_ws(text).title()
 
 
-def _city_key(display: str) -> str:
-    return " ".join(_TOKEN_EXPANSIONS.get(t, t) for t in display.upper().split())
-
-
 def _require_columns(rows: list[dict[str, str]], columns: tuple[str, ...], label: str) -> None:
     if not rows:
         return
@@ -213,13 +209,14 @@ def _clean_stations(rows: list[dict[str, str]]) -> tuple[list[_Row], int, dict[s
                 f"invalid OPIS Truckstop ID: {raw['OPIS Truckstop ID']!r}"
             ) from err
         display = _display_city(raw["City"])
+        key, _ = normalize_city_key(display, state)
         kept.append(
             _Row(
                 opis_id=opis_id,
                 name=_collapse_ws(raw["Truckstop Name"]),
                 address=_collapse_ws(raw["Address"]),
                 city=display,
-                key=_city_key(display),
+                key=key,
                 state=state,
                 price=price,
             )
@@ -254,7 +251,8 @@ def _collapse_cities(rows: list[dict[str, str]]) -> dict[tuple[str, str], CityRe
         except ValueError as err:
             raise DataBuildError(f"invalid coordinates for city {display!r}, {state}") from err
         population = _parse_population(raw.get("POPULATION"))
-        record = CityRecord(display, _city_key(display), state, round(lat, 6), round(lon, 6))
+        city_key, _ = normalize_city_key(display, state)
+        record = CityRecord(display, city_key, state, round(lat, 6), round(lon, 6))
         groups[(record.city_key, state)].append((population, record))
 
     cities: dict[tuple[str, str], CityRecord] = {}
