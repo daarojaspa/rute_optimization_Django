@@ -56,14 +56,14 @@ description: "Task list for the route lookup and orchestration endpoint"
 
 ### Tests for User Story 1a (write first)
 
-- [ ] T015 [P] [US1] `tests/unit/routing/test_osrm.py`: `test_decode_polyline_matches_published_example` (research.md D5 golden string)
-- [ ] T016 [P] [US1] `tests/unit/routing/test_osrm.py`: `test_fetch_route_sends_coordinates_as_lon_lat`, `test_fetch_route_requests_full_overview_no_steps_annotations_alternatives`, `test_fetch_route_converts_metres_to_miles`, `test_fetch_route_makes_exactly_one_call` (respx)
-- [ ] T017 [P] [US1] `tests/unit/routing/test_osrm.py`: `test_fetch_route_uses_3s_connect_10s_read_timeout`, `test_fetch_route_does_not_retry`, `test_non_ok_code_raises_OsrmRejected_with_code`, `test_timeout_raises_OsrmUnavailable_from_err`
+- [X] T015 [P] [US1] `tests/unit/routing/test_osrm.py`: `test_decode_polyline_matches_published_example` (research.md D5 golden string)
+- [X] T016 [P] [US1] `tests/unit/routing/test_osrm.py`: `test_fetch_route_sends_coordinates_as_lon_lat`, `test_fetch_route_requests_full_overview_no_steps_annotations_alternatives`, `test_fetch_route_converts_metres_to_miles`, `test_fetch_route_makes_exactly_one_call` (respx)
+- [X] T017 [P] [US1] `tests/unit/routing/test_osrm.py`: `test_fetch_route_uses_3s_connect_10s_read_timeout`, `test_fetch_route_does_not_retry`, `test_non_ok_code_raises_OsrmRejected_with_code`, `test_timeout_raises_OsrmUnavailable_from_err`
 
 ### Implementation for User Story 1a
 
-- [ ] T018 [US1] `routing/osrm.py`: hand-written polyline decoder, precision 5, `(lat, lon)` in order (depends on T015)
-- [ ] T019 [US1] `routing/osrm.py`: `fetch_route(start_coord, finish_coord, client) -> Route` — one `httpx` GET, query string from research.md D4, raises `OsrmRejected`/`OsrmUnavailable` (depends on T016, T017, T018, T008)
+- [X] T018 [US1] `routing/osrm.py`: hand-written polyline decoder, precision 5, `(lat, lon)` in order (depends on T015)
+- [X] T019 [US1] `routing/osrm.py`: `fetch_route(start_coord, finish_coord, client) -> Route` — one `httpx` GET, query string from research.md D4, raises `OsrmRejected`/`OsrmUnavailable` (depends on T016, T017, T018, T008)
 
 **Checkpoint**: OSRM integration is fully tested in isolation; `routing/` still imports nothing from Django.
 
