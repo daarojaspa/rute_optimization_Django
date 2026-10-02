@@ -167,10 +167,10 @@ description: "Task list for the route lookup and orchestration endpoint"
 
 ## Phase 9: Polish & Cross-Cutting (PR 9: `chore` — polish)
 
-- [ ] T041 [P] Write the README note in `fueling_map/README.md`: the cache is per-worker and lost on restart (FR-016), and the 500-mile short-circuit is the full-tank range
-- [ ] T042 [P] Add a no-network guard for `tests/unit/routing/` and `tests/integration/test_route_endpoint.py` (block real sockets; same pattern as the 001 pipeline's no-network test) confirming FR-019
-- [ ] T043 Run `ruff check .`, `ruff format --check .`, `mypy .`, `pytest` — full suite green
-- [ ] T044 Run `quickstart.md` end to end, including the manual smoke test; record actual cached/uncached latencies against SC-005 and confirm SC-001–SC-006 in the PR description
+- [X] T041 [P] Write the README note in `fueling_map/README.md`: the cache is per-worker and lost on restart (FR-016), and the 500-mile short-circuit is the full-tank range
+- [X] T042 [P] Add a no-network guard for `tests/unit/routing/` and `tests/integration/test_route_endpoint.py` (block real sockets; same pattern as the 001 pipeline's no-network test) confirming FR-019
+- [X] T043 Run `ruff check .`, `ruff format --check .`, `mypy .`, `pytest` — full suite green
+- [X] T044 Run `quickstart.md` end to end, including the manual smoke test; record actual cached/uncached latencies against SC-005 and confirm SC-001–SC-006 in the PR description — see the Phase 9 commit message for the full record
 
 ---
 

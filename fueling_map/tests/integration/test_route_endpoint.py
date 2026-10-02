@@ -5,6 +5,7 @@ module-level cache is reset around every test so one test's seeded cities never 
 next.
 """
 
+import socket
 from collections.abc import Iterator
 
 import httpx
@@ -35,6 +36,17 @@ def _reset_index() -> Iterator[None]:
 @pytest.fixture(autouse=True)
 def _pin_osrm_base_url(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("OSRM_BASE_URL", OSRM_URL)
+
+
+@pytest.fixture(autouse=True)
+def _block_real_network(monkeypatch: pytest.MonkeyPatch) -> None:
+    # FR-019: respx already intercepts httpx for every OSRM-touching test below; this exists
+    # to fail loudly, not pass silently, if a test is ever missing its @respx.mock decorator.
+    def blocked(*args: object, **kwargs: object) -> None:
+        raise AssertionError("network access attempted")
+
+    monkeypatch.setattr(socket, "create_connection", blocked)
+    monkeypatch.setattr(socket.socket, "connect", blocked)
 
 
 def _seed_cities() -> None:
