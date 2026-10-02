@@ -10,6 +10,7 @@ import httpx
 import pytest
 from pytest_mock import MockerFixture
 
+from routing.errors import CityNotFound, InvalidParameter, SameEndpoints
 from routing.osrm import Route
 from routing.pipeline import _parse_endpoint, plan_route
 
@@ -79,3 +80,47 @@ def test_equivalent_spellings_resolve_to_the_same_city(
 
     assert (result.start_city, result.start_state) == ("DALLAS", "TX")
     assert (result.finish_city, result.finish_state) == ("DENVER", "CO")
+
+
+# --- US2: errors, before any OSRM call -------------------------------------------------------
+
+
+def test_missing_or_unsplittable_param_raises_InvalidParameter(
+    mocker: MockerFixture, http: httpx.Client
+) -> None:
+    fetch = mocker.patch("routing.pipeline.fetch_route")
+
+    with pytest.raises(InvalidParameter) as exc_info:
+        plan_route("Dallas TX", "Denver, CO", CITIES, None, http)  # no comma
+
+    assert exc_info.value.detail == "start"
+    fetch.assert_not_called()
+
+    with pytest.raises(InvalidParameter) as exc_info:
+        plan_route("", "Denver, CO", CITIES, None, http)
+
+    assert exc_info.value.detail == "start"
+
+
+def test_equal_normalized_endpoints_raise_SameEndpoints(
+    mocker: MockerFixture, http: httpx.Client
+) -> None:
+    fetch = mocker.patch("routing.pipeline.fetch_route")
+
+    cities = {**CITIES, ("SAINT LOUIS", "MO"): (0.0, 0.0)}
+    with pytest.raises(SameEndpoints):
+        plan_route("st. louis, mo", "Saint Louis, MO", cities, None, http)
+
+    fetch.assert_not_called()
+
+
+def test_unknown_city_raises_CityNotFound_with_parsed_key(
+    mocker: MockerFixture, http: httpx.Client
+) -> None:
+    fetch = mocker.patch("routing.pipeline.fetch_route")
+
+    with pytest.raises(CityNotFound) as exc_info:
+        plan_route("Nowhere, ZZ", "Denver, CO", CITIES, None, http)
+
+    assert (exc_info.value.city_key, exc_info.value.state) == ("NOWHERE", "ZZ")
+    fetch.assert_not_called()

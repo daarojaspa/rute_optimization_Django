@@ -100,13 +100,13 @@ description: "Task list for the route lookup and orchestration endpoint"
 
 ### Tests for User Story 2 (write first)
 
-- [ ] T027 [P] [US2] `tests/unit/routing/test_pipeline.py`: `test_missing_or_unsplittable_param_raises_InvalidParameter`, `test_equal_normalized_endpoints_raise_SameEndpoints`, `test_unknown_city_raises_CityNotFound_with_parsed_key`
-- [ ] T028 [P] [US2] `tests/integration/test_route_endpoint.py`: `test_missing_start_returns_400_naming_parameter`, `test_value_with_no_comma_returns_400`, `test_unknown_city_returns_404_echoing_parsed_city_and_state`, `test_identical_endpoints_returns_400_start_and_finish_must_differ`, `test_osrm_no_route_returns_502_with_osrm_code`, `test_osrm_timeout_returns_504`
+- [X] T027 [P] [US2] `tests/unit/routing/test_pipeline.py`: `test_missing_or_unsplittable_param_raises_InvalidParameter`, `test_equal_normalized_endpoints_raise_SameEndpoints`, `test_unknown_city_raises_CityNotFound_with_parsed_key`
+- [X] T028 [P] [US2] `tests/integration/test_route_endpoint.py`: `test_missing_start_returns_400_naming_parameter`, `test_value_with_no_comma_returns_400`, `test_unknown_city_returns_404_echoing_parsed_city_and_state`, `test_identical_endpoints_returns_400_start_and_finish_must_differ`, `test_osrm_no_route_returns_502_with_osrm_code`, `test_osrm_timeout_returns_504`
 
 ### Implementation for User Story 2
 
-- [ ] T029 [US2] `routing/pipeline.py`: on top of `_parse_endpoint` (T022), raise `InvalidParameter` when a half is missing or there is no comma, `SameEndpoints` when the normalized start equals finish, `CityNotFound` when the key is absent from `CityIndex` — all before any OSRM call (depends on T022, T023)
-- [ ] T030 [US2] `api/views.py`: one `except RouteError` handler building `{"error", "detail", ...}` per contracts/route-api.md's status table (depends on T024, T029)
+- [X] T029 [US2] `routing/pipeline.py`: on top of `_parse_endpoint` (T022), raise `InvalidParameter` when a half is missing or there is no comma, `SameEndpoints` when the normalized start equals finish, `CityNotFound` when the key is absent from `CityIndex` — all before any OSRM call (depends on T022, T023)
+- [X] T030 [US2] `api/views.py`: one `except RouteError` handler building `{"error", "detail", ...}` per contracts/route-api.md's status table (depends on T024, T029)
 
 **Checkpoint**: every error class in the contract returns its documented status and body.
 

@@ -73,3 +73,77 @@ def test_response_echoes_start_and_finish_city_state_lat_lon(client: Client) -> 
     body = response.json()
     assert body["start"] == {"city": "DALLAS", "state": "TX", "lat": 32.78, "lon": -96.80}
     assert body["finish"] == {"city": "DENVER", "state": "CO", "lat": 39.74, "lon": -104.99}
+
+
+# --- US2: error responses ----------------------------------------------------------------------
+
+
+def test_missing_start_returns_400_naming_parameter(client: Client) -> None:
+    _seed_cities()
+
+    response = client.get("/api/route/", {"finish": "Denver, CO"})
+
+    assert response.status_code == 400
+    body = response.json()
+    assert body["error"] == "invalid_parameter"
+    assert body["detail"] == "start"
+
+
+def test_value_with_no_comma_returns_400(client: Client) -> None:
+    _seed_cities()
+
+    response = client.get("/api/route/", {"start": "Dallas TX", "finish": "Denver, CO"})
+
+    assert response.status_code == 400
+    assert response.json()["error"] == "invalid_parameter"
+
+
+def test_unknown_city_returns_404_echoing_parsed_city_and_state(client: Client) -> None:
+    _seed_cities()
+
+    response = client.get("/api/route/", {"start": "Nowhere, ZZ", "finish": "Denver, CO"})
+
+    assert response.status_code == 404
+    body = response.json()
+    assert body["error"] == "city_not_found"
+    assert body["city_key"] == "NOWHERE"
+    assert body["state"] == "ZZ"
+
+
+def test_identical_endpoints_returns_400_start_and_finish_must_differ(client: Client) -> None:
+    _seed_cities()
+
+    response = client.get("/api/route/", {"start": "Dallas, TX", "finish": "dallas, tx"})
+
+    assert response.status_code == 400
+    body = response.json()
+    assert body["error"] == "same_endpoints"
+    assert body["detail"] == "start and finish must differ"
+
+
+@respx.mock
+def test_osrm_no_route_returns_502_with_osrm_code(client: Client) -> None:
+    _seed_cities()
+    respx.get(url__startswith=f"{OSRM_URL}/route/v1/driving/").mock(
+        return_value=httpx.Response(200, json={"code": "NoRoute", "routes": []})
+    )
+
+    response = client.get("/api/route/", {"start": "Dallas, TX", "finish": "Denver, CO"})
+
+    assert response.status_code == 502
+    body = response.json()
+    assert body["error"] == "osrm_rejected"
+    assert body["osrm_code"] == "NoRoute"
+
+
+@respx.mock
+def test_osrm_timeout_returns_504(client: Client) -> None:
+    _seed_cities()
+    respx.get(url__startswith=f"{OSRM_URL}/route/v1/driving/").mock(
+        side_effect=httpx.ReadTimeout("too slow")
+    )
+
+    response = client.get("/api/route/", {"start": "Dallas, TX", "finish": "Denver, CO"})
+
+    assert response.status_code == 504
+    assert response.json()["error"] == "osrm_unavailable"
