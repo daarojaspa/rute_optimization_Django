@@ -158,8 +158,8 @@ description: "Task list for the route lookup and orchestration endpoint"
 
 **Independent Test**: quickstart scenario 12.
 
-- [ ] T039 [US5] `tests/integration/test_route_endpoint.py`: `test_missing_cities_database_returns_503_naming_build_data`, `test_empty_cities_table_returns_503`
-- [ ] T040 [US5] Wire `api/repo.py::load_cities` as the loader passed to `get_city_index` at the view/pipeline boundary; confirm `CitiesDataMissing` reaches the view's error handler unchanged (depends on T012, T030)
+- [X] T039 [US5] `tests/integration/test_route_endpoint.py`: `test_missing_cities_database_returns_503_naming_build_data`, `test_empty_cities_table_returns_503`
+- [X] T040 [US5] Wire `api/repo.py::load_cities` as the loader passed to `get_city_index` at the view/pipeline boundary; confirm `CitiesDataMissing` reaches the view's error handler unchanged (depends on T012, T030) — this surfaced a real bug: `get_city_index` was called outside the `try` block, so `CitiesDataMissing` was never caught; fixed by moving it inside
 
 **Checkpoint**: an un-built or empty data store fails every request with one unambiguous, tested message.
 

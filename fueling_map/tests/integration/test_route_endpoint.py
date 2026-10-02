@@ -11,7 +11,9 @@ import httpx
 import pytest
 import respx
 from django.core.cache import cache as django_cache
+from django.db.utils import OperationalError
 from django.test import Client
+from pytest_mock import MockerFixture
 
 from routing.city_index import reset_city_index
 from stations.models import City
@@ -206,3 +208,32 @@ def test_over_500_mile_route_returns_501_planner_not_available(client: Client) -
 
     assert response.status_code == 501
     assert response.json()["error"] == "planner_not_available"
+
+
+# --- US5: fail loudly when data has not been built -----------------------------------------
+
+
+def test_missing_cities_database_returns_503_naming_build_data(
+    client: Client, mocker: MockerFixture
+) -> None:
+    # Simulates what sqlite actually raises for an absent database file, at the one place
+    # (api/repo.py) that translates it: no cities are seeded, and the ORM call itself fails.
+    mocker.patch(
+        "stations.models.City.objects.using",
+        side_effect=OperationalError("unable to open database file"),
+    )
+
+    response = client.get("/api/route/", {"start": "Dallas, TX", "finish": "Denver, CO"})
+
+    assert response.status_code == 503
+    body = response.json()
+    assert body["error"] == "cities_data_missing"
+    assert "build_data" in body["detail"]
+
+
+def test_empty_cities_table_returns_503(client: Client) -> None:
+    # No _seed_cities() call: the real cities database exists and migrates, but has no rows.
+    response = client.get("/api/route/", {"start": "Dallas, TX", "finish": "Denver, CO"})
+
+    assert response.status_code == 503
+    assert response.json()["error"] == "cities_data_missing"

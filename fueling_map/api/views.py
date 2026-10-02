@@ -18,8 +18,8 @@ _http_client = httpx.Client()  # module-level: one pooled client per worker proc
 
 
 def route_view(request: HttpRequest) -> JsonResponse:
-    cities = get_city_index(load_cities)
     try:
+        cities = get_city_index(load_cities)
         result = plan_route(
             request.GET.get("start", ""),
             request.GET.get("finish", ""),
