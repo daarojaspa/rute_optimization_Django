@@ -77,16 +77,16 @@ description: "Task list for the route lookup and orchestration endpoint"
 
 ### Tests for User Story 1b (write first)
 
-- [ ] T020 [P] [US1] `tests/unit/routing/test_pipeline.py`: `test_start_and_finish_are_split_on_first_comma_and_trimmed` (FR-006), `test_plan_route_resolves_start_and_finish_via_city_index`, `test_plan_route_passes_city_coordinates_to_fetch_route`, `test_plan_route_returns_geometry_in_lat_lon_order`, `test_equivalent_spellings_resolve_to_the_same_city` (quickstart #1)
-- [ ] T021 [P] [US1] `tests/integration/test_route_endpoint.py`: `test_valid_request_returns_200_with_miles_geometry_and_one_osrm_call`, `test_response_echoes_start_and_finish_city_state_lat_lon`
+- [X] T020 [P] [US1] `tests/unit/routing/test_pipeline.py`: `test_start_and_finish_are_split_on_first_comma_and_trimmed` (FR-006), `test_plan_route_resolves_start_and_finish_via_city_index`, `test_plan_route_passes_city_coordinates_to_fetch_route`, `test_plan_route_returns_geometry_in_lat_lon_order`, `test_equivalent_spellings_resolve_to_the_same_city` (quickstart #1)
+- [X] T021 [P] [US1] `tests/integration/test_route_endpoint.py`: `test_valid_request_returns_200_with_miles_geometry_and_one_osrm_call`, `test_response_echoes_start_and_finish_city_state_lat_lon`
 
 ### Implementation for User Story 1b
 
-- [ ] T022 [US1] `routing/pipeline.py`: `_parse_endpoint(raw) -> tuple[str, str]` — split `start`/`finish` on the first comma, trim both halves (FR-006); this is the shared parsing step US2 (T029) builds its validation on, so it lands here, before the happy path needs it
-- [ ] T023 [US1] `routing/pipeline.py`: `plan_route(start, finish, cities, cache, http, planner) -> RouteResult` happy path — call `_parse_endpoint` on both ends, normalize, resolve via `CityIndex`, call `fetch_route`, build `RouteResult` (depends on T010, T019, T022)
-- [ ] T024 [US1] `api/views.py`: `route_view` — parse query params, call `plan_route`, serialize the success body per contracts/route-api.md; keep it under 30 lines (depends on T023)
-- [ ] T025 [US1] `api/urls.py`: `path("route/", route_view)`; include it from `config/urls.py` under `api/` (depends on T014, T024)
-- [ ] T026 [US1] `config/settings.py`: `CACHES` (LocMemCache) and `OSRM_BASE_URL` from the environment, default `https://router.project-osrm.org`
+- [X] T022 [US1] `routing/pipeline.py`: `_parse_endpoint(raw) -> tuple[str, str]` — split `start`/`finish` on the first comma, trim both halves (FR-006); this is the shared parsing step US2 (T029) builds its validation on, so it lands here, before the happy path needs it
+- [X] T023 [US1] `routing/pipeline.py`: `plan_route(start, finish, cities, cache, http, planner) -> RouteResult` happy path — call `_parse_endpoint` on both ends, normalize, resolve via `CityIndex`, call `fetch_route`, build `RouteResult` (depends on T010, T019, T022)
+- [X] T024 [US1] `api/views.py`: `route_view` — parse query params, call `plan_route`, serialize the success body per contracts/route-api.md; keep it under 30 lines (depends on T023)
+- [X] T025 [US1] `api/urls.py`: `path("route/", route_view)`; include it from `config/urls.py` under `api/` (depends on T014, T024)
+- [X] T026 [US1] `config/settings.py`: `CACHES` (LocMemCache) and `OSRM_BASE_URL` from the environment, default `https://router.project-osrm.org`
 
 **Checkpoint**: `GET /api/route/` returns a real route for a valid city pair with exactly one OSRM call (respx-confirmed). **MVP complete.**
 

@@ -1,5 +1,5 @@
-"""URL routes. The build_data feature adds none; the API feature will."""
+"""URL routes."""
 
-from django.urls import URLPattern
+from django.urls import URLPattern, URLResolver, include, path
 
-urlpatterns: list[URLPattern] = []
+urlpatterns: list[URLPattern | URLResolver] = [path("api/", include("api.urls"))]

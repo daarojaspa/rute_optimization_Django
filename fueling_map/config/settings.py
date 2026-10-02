@@ -34,6 +34,14 @@ DATABASES = {
 DATABASE_ROUTERS = ["stations.db_router.CitiesRouter"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+# Route cache (FR-015, FR-016): per-worker, lost on restart. Production would use a shared
+# store (e.g. Redis); acceptable for this MVP per the constitution's Purpose & Scope.
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
+# routing/osrm.py reads this directly via os.environ, not through Django settings, so it stays
+# free of Django imports (Principle I); it is set here too for operational visibility.
+OSRM_BASE_URL = os.environ.get("OSRM_BASE_URL", "https://router.project-osrm.org")
+
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_TZ = True
