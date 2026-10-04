@@ -61,7 +61,16 @@ def _seed_cities() -> None:
 def _mock_osrm(distance_m: float = 160_934.4) -> respx.Route:
     return respx.get(url__startswith=f"{OSRM_URL}/route/v1/driving/").mock(
         return_value=httpx.Response(
-            200, json={"code": "Ok", "routes": [{"distance": distance_m, "geometry": "_p~iF~ps|U"}]}
+            200,
+            json={
+                "code": "Ok",
+                "routes": [
+                    {
+                        "distance": distance_m,
+                        "geometry": {"type": "LineString", "coordinates": [[-120.2, 38.5]]},
+                    }
+                ],
+            },
         )
     )
 

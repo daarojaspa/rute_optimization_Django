@@ -8,27 +8,32 @@ import pytest
 import respx
 
 from routing.errors import OsrmRejected, OsrmUnavailable
-from routing.osrm import decode_polyline, fetch_route
+from routing.osrm import fetch_route
 
 BASE_URL = "https://osrm.test"
 DALLAS = (32.78, -96.80)
 DENVER = (39.74, -104.99)
 
 
-def _ok_response(distance_m: float = 801_300.0, geometry: str = "_p~iF~ps|U") -> dict[str, object]:
+def _ok_response(
+    distance_m: float = 801_300.0, geometry: dict[str, object] | None = None
+) -> dict[str, object]:
+    geometry = geometry or {"type": "LineString", "coordinates": [[-96.8, 32.78], [-104.99, 39.74]]}
     return {"code": "Ok", "routes": [{"distance": distance_m, "geometry": geometry}]}
 
 
-# --- T015: polyline golden value -------------------------------------------------------------
+# --- geometry: GeoJSON [lon, lat] in, (lat, lon) tuples out ----------------------------------
 
 
-def test_decode_polyline_matches_published_example() -> None:
-    # The example string published in OSRM/Google's polyline encoding documentation.
-    assert decode_polyline("_p~iF~ps|U_ulLnnqC_mqNvxq`@") == [
-        (38.5, -120.2),
-        (40.7, -120.95),
-        (43.252, -126.453),
-    ]
+@respx.mock
+def test_fetch_route_returns_geometry_as_lat_lon_tuples() -> None:
+    respx.get(url__startswith=f"{BASE_URL}/route/v1/driving/").mock(
+        return_value=httpx.Response(200, json=_ok_response())
+    )
+    with httpx.Client() as client:
+        result = fetch_route(DALLAS, DENVER, client, base_url=BASE_URL)
+
+    assert result.geometry == [(32.78, -96.8), (39.74, -104.99)]
 
 
 # --- T016: the one call's shape ------------------------------------------------------------
@@ -47,7 +52,9 @@ def test_fetch_route_sends_coordinates_as_lon_lat() -> None:
 
 
 @respx.mock
-def test_fetch_route_requests_full_overview_no_steps_annotations_alternatives() -> None:
+def test_fetch_route_requests_simplified_geojson_overview_no_steps_annotations_alternatives() -> (
+    None
+):
     route = respx.get(url__startswith=f"{BASE_URL}/route/v1/driving/").mock(
         return_value=httpx.Response(200, json=_ok_response())
     )
@@ -55,8 +62,8 @@ def test_fetch_route_requests_full_overview_no_steps_annotations_alternatives() 
         fetch_route(DALLAS, DENVER, client, base_url=BASE_URL)
 
     params = route.calls.last.request.url.params
-    assert params["overview"] == "full"
-    assert params["geometries"] == "polyline"
+    assert params["overview"] == "simplified"
+    assert params["geometries"] == "geojson"
     assert params["steps"] == "false"
     assert params["annotations"] == "false"
     assert params["alternatives"] == "false"
