@@ -1,0 +1,5 @@
+###how bisect works 
+###limiting acuracy on saving floats and  comparing them with is close and decimals
+decimal consume more memory  and  are decing  for money operations where 0.1+0.3 ==0.4
+### what is clamp and how boxes overlap eachother 
+is tu cut avrithing outside of a band 

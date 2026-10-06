@@ -49,8 +49,6 @@ def fill_the_tank (chosen):
     return fill_up
                             
 
-            
-    pass
 def calculate_cost (fill_ups):
     #calculates  costs multiplieng galons per price summing them up and doing and printing a recibe 
 
